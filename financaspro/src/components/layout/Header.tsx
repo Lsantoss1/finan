@@ -39,10 +39,14 @@ export default function Header() {
         <button onClick={() => setSidebarMobileOpen(true)} className="lg:hidden p-2 rounded-xl hover:bg-[var(--surface-hover)]" style={{ color: 'var(--text-secondary)' }}>
           <Menu size={20} />
         </button>
-        <div>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
+        <div className="flex flex-col">
+          <h2 className="text-lg font-bold tracking-tight" style={{ color: 'var(--text)' }}>
             {getGreeting()}{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}! 👋
           </h2>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Saúde: Estável</span>
+          </div>
         </div>
       </div>
 

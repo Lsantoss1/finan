@@ -2,14 +2,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUIStore } from '@/stores/useUIStore';
-import { LayoutDashboard, ArrowLeftRight, Landmark, CreditCard, Target, PieChart, BarChart3, Settings, ChevronLeft, TrendingUp, X } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Landmark, CreditCard, Target, PieChart, BarChart3, Settings, ChevronLeft, TrendingUp, X, Tags, Zap, Brain, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/transacoes', icon: ArrowLeftRight, label: 'Transações' },
   { href: '/contas', icon: Landmark, label: 'Contas' },
   { href: '/cartoes', icon: CreditCard, label: 'Cartões' },
+  { href: '/categorias', icon: Tags, label: 'Categorias' },
+  { href: '/calendario', icon: Calendar, label: 'Calendário' },
+  { href: '/planejamento', icon: Brain, label: 'Planejamento' },
   { href: '/orcamentos', icon: PieChart, label: 'Orçamentos' },
   { href: '/metas', icon: Target, label: 'Metas' },
   { href: '/relatorios', icon: BarChart3, label: 'Relatórios' },
@@ -28,19 +32,19 @@ export default function Sidebar() {
       )}
 
       <aside className={cn(
-        'fixed top-0 left-0 z-50 h-screen flex flex-col transition-all duration-300 ease-in-out',
+        'fixed top-0 left-0 z-50 h-screen flex flex-col transition-all duration-300 ease-in-out backdrop-blur-xl saturate-[180%]',
         sidebarCollapsed ? 'w-[72px]' : 'w-[260px]',
         sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      )} style={{ background: 'var(--sidebar-bg)' }}>
+      )} style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-16 border-b border-white/10">
           <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
               <TrendingUp size={18} className="text-white" />
             </div>
-            {!sidebarCollapsed && <span className="text-white font-bold text-lg whitespace-nowrap">FinançasPro</span>}
+            {!sidebarCollapsed && <span className="font-bold text-lg whitespace-nowrap" style={{ color: 'var(--text)' }}>FinançasPro</span>}
           </Link>
-          <button onClick={() => setSidebarMobileOpen(false)} className="lg:hidden text-white/60 hover:text-white p-1"><X size={20} /></button>
+          <button onClick={() => setSidebarMobileOpen(false)} className="lg:hidden p-1 opacity-60 hover:opacity-100" style={{ color: 'var(--text)' }}><X size={20} /></button>
         </div>
 
         {/* Nav */}
@@ -50,14 +54,26 @@ export default function Sidebar() {
             return (
               <Link key={href} href={href} onClick={() => setSidebarMobileOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
-                  isActive ? 'bg-[var(--primary)] text-white shadow-lg' : 'text-white/60 hover:text-white hover:bg-white/5',
-                  sidebarCollapsed && 'justify-center px-0'
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative',
+                  isActive ? 'bg-[var(--primary)] text-white shadow-lg' : 'hover:translate-x-1',
+                  sidebarCollapsed && 'justify-center px-0 hover:translate-x-0'
                 )}
-                style={isActive ? { boxShadow: '0 4px 12px rgba(108, 60, 224, 0.4)' } : {}}
+                style={isActive ? { 
+                  boxShadow: '0 8px 20px -4px rgba(108, 60, 224, 0.4)',
+                  color: '#ffffff'
+                } : { 
+                  color: 'var(--text-secondary)' 
+                }}
                 title={sidebarCollapsed ? label : undefined}>
-                <Icon size={20} className="flex-shrink-0" />
-                {!sidebarCollapsed && <span className="text-sm font-medium">{label}</span>}
+                <Icon size={20} className={cn("flex-shrink-0 transition-transform duration-300 group-hover:scale-110", isActive && "rotate-3")} />
+                {!sidebarCollapsed && <span className="text-sm font-bold tracking-tight">{label}</span>}
+                {isActive && (
+                  <motion.div 
+                    layoutId="active-nav"
+                    className="absolute inset-0 rounded-xl bg-white/10 z-[-1]"
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -66,8 +82,11 @@ export default function Sidebar() {
         {/* Collapse button */}
         <div className="hidden lg:block px-3 pb-4">
           <button onClick={toggleSidebar}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/5 transition-all w-full"
-            style={sidebarCollapsed ? { justifyContent: 'center' } : {}}>
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full opacity-40 hover:opacity-70"
+            style={{ 
+              color: 'var(--text)',
+              ... (sidebarCollapsed ? { justifyContent: 'center' } : {})
+            }}>
             <ChevronLeft size={20} className={cn('transition-transform', sidebarCollapsed && 'rotate-180')} />
             {!sidebarCollapsed && <span className="text-sm">Recolher</span>}
           </button>

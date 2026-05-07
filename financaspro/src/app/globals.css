@@ -3,60 +3,49 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --primary: #6C3CE0;
-  --primary-hover: #5B2FCC;
-  --primary-dark: #4A1DB0;
-  --primary-light: #8B5CF6;
-  --accent: #FFB800;
-  --accent-hover: #E5A600;
-  --success: #22C55E;
-  --success-bg: #22C55E1A;
-  --danger: #EF4444;
-  --danger-bg: #EF44441A;
-  --warning: #F59E0B;
-  --warning-bg: #F59E0B1A;
-  --info: #3B82F6;
+  --primary: #6c3ce0;
+  --primary-hover: #5b2fcc;
+  --primary-bg: rgba(108, 60, 224, 0.1);
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --danger: #f43f5e;
+  --danger-bg: rgba(244, 63, 94, 0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  
+  /* Apple Light Mode */
+  --bg: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-hover: rgba(255, 255, 255, 0.9);
+  --border: rgba(0, 0, 0, 0.08);
+  --text: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-muted: #a1a1a6;
+  
+  --sidebar-bg: #ffffff;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.05);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.08);
 
-  /* Light mode */
-  --bg: #F8F7FC;
-  --bg-secondary: #F0EEF5;
-  --surface: #FFFFFF;
-  --surface-hover: #F5F3FA;
-  --border: #E5E1EE;
-  --text: #1A1230;
-  --text-secondary: #6B6580;
-  --text-muted: #9B95A8;
-
-  --sidebar-bg: #1A1230;
-  --sidebar-text: #E5E1EE;
-  --sidebar-active: #6C3CE0;
-
-  --shadow-sm: 0 1px 2px rgba(26, 18, 48, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(26, 18, 48, 0.07), 0 2px 4px -2px rgba(26, 18, 48, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(26, 18, 48, 0.08), 0 4px 6px -4px rgba(26, 18, 48, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(26, 18, 48, 0.1), 0 8px 10px -6px rgba(26, 18, 48, 0.05);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
 }
 
 .dark {
-  --bg: #0F0A1A;
-  --bg-secondary: #160F26;
-  --surface: #1A1230;
-  --surface-hover: #231A3D;
-  --border: #2D2444;
-  --text: #F0EEF5;
-  --text-secondary: #A09BB0;
-  --text-muted: #6B6580;
+  /* Apple Dark Mode - Deep Purple Midnight Variation */
+  --bg: #0d0b1a;
+  --bg-secondary: #16122d;
+  --surface: rgba(22, 18, 45, 0.75);
+  --surface-hover: rgba(30, 25, 60, 0.85);
+  --border: rgba(139, 92, 246, 0.15);
+  --text: #f5f5f7;
+  --text-secondary: #a7a2c4;
+  --text-muted: #625d80;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --sidebar-bg: rgba(13, 11, 26, 0.85);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.6);
 }
 
 /* Global Styles */
@@ -110,20 +99,23 @@ body {
 }
 
 /* Utility classes */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.apple-glass {
+  background: var(--surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
 }
 
-.dark .glass {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
 }
 
 .gradient-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, #6c3ce0 0%, #8b5cf6 100%);
 }
 
 .gradient-accent {
@@ -201,12 +193,13 @@ body {
 
 /* Card hover effect */
 .card-interactive {
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-xl);
+  background: var(--surface-hover);
 }
 
 /* Number formatting */

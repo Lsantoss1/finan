@@ -31,21 +31,41 @@ export default function ContasPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sessão expirada');
 
-    if (editingId) {
-      const { error } = await supabase.from('accounts').update({ name: form.name, type: form.type, bank: form.bank || null, initial_balance: form.initial_balance, color: form.color, icon: form.icon, updated_at: new Date().toISOString() }).eq('id', editingId);
-      if (error) toast.error(error.message); else toast.success('Conta atualizada!');
-    } else {
-      const { error } = await supabase.from('accounts').insert({ user_id: user.id, name: form.name, type: form.type, bank: form.bank || null, initial_balance: form.initial_balance, color: form.color, icon: form.icon });
-      if (error) toast.error(error.message); else toast.success('Conta criada!');
+      const accountData = { 
+        user_id: user.id, 
+        name: form.name, 
+        type: form.type, 
+        bank: form.bank || null, 
+        initial_balance: form.initial_balance, 
+        color: form.color, 
+        icon: form.icon 
+      };
+
+      if (editingId) {
+        const { error } = await supabase.from('accounts')
+          .update({ ...accountData, updated_at: new Date().toISOString() })
+          .eq('id', editingId);
+        if (error) throw error;
+        toast.success('Conta atualizada!');
+      } else {
+        const { error } = await supabase.from('accounts').insert(accountData);
+        if (error) throw error;
+        toast.success('Conta criada!');
+      }
+      setShowModal(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      loadAccounts();
+    } catch (error: any) {
+      console.error('Erro ao salvar conta:', error);
+      toast.error(error.message || 'Erro ao salvar conta');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setShowModal(false);
-    setEditingId(null);
-    setForm(defaultForm);
-    loadAccounts();
   };
 
   const handleEdit = (account: Account) => {
