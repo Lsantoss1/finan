@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { X, Loader2, Plus, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Calendar as CalendarIcon, Tag, AlignLeft, Zap } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { Loader2, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Account, Category, TransactionType } from '@/types';
 import { AIService } from '@/lib/ai';
 import { parseBankStatement } from '@/app/actions/ai';
@@ -21,6 +21,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   const [type, setType] = useState<TransactionType>(initialType);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
   
   // Form state
   const [amount, setAmount] = useState('');
@@ -35,7 +36,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   
   // Advanced Planning
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrenceType, setRecurrenceType] = useState('monthly');
+  const [recurrenceType] = useState('monthly'); // setRecurrenceType removido por não ser usado
   const [isVariable, setIsVariable] = useState(false);
   const [isTemporary, setIsTemporary] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
@@ -48,30 +49,9 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   // Data from Supabase
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [cards, setCards] = useState<any[]>([]);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [cards, setCards] = useState<any[]>([]); // Mantido any temporariamente para os cartões
 
-
-  useEffect(() => {
-    if (isOpen) {
-      loadFormData();
-      setType(initialType);
-      setAmount('');
-      setDescription('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setTags('');
-      setIsRecurring(false);
-      setIsVariable(false);
-      setIsTemporary(false);
-      setSelectedMonths([]);
-      setInstallmentTotal('1');
-      setPaymentMethod('account');
-      setActiveTab('form');
-      setImportText('');
-    }
-  }, [isOpen, initialType]);
-
-  const loadFormData = async () => {
+  const loadFormData = useCallback(async () => {
     setFetching(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -90,7 +70,26 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
     if (crds.data?.length) setCardId(crds.data[0].id);
     
     setFetching(false);
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadFormData();
+      setType(initialType);
+      setAmount('');
+      setDescription('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setTags('');
+      setIsRecurring(false);
+      setIsVariable(false);
+      setIsTemporary(false);
+      setSelectedMonths([]);
+      setInstallmentTotal('1');
+      setPaymentMethod('account');
+      setActiveTab('form');
+      setImportText('');
+    }
+  }, [isOpen, initialType, loadFormData]);
 
   const toggleMonth = (month: number) => {
     setSelectedMonths(prev => 
@@ -117,7 +116,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
       const res = await parseBankStatement(description);
       if (res.error) {
         toast.error("IA na Nuvem indisponível. Usando Scanner Local.");
-        // Scanner Local (Regex/Heurística)
         const amountMatch = description.match(/(\d+[,.]\d+)/);
         if (amountMatch) {
           const val = parseFloat(amountMatch[0].replace(',', '.'));
@@ -142,11 +140,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
           if (predictedCat) setCategoryId(predictedCat);
           
           toast.success("IA: Transação analisada com sucesso!");
-        } catch (e) {
+        } catch {
           toast.error("Erro ao processar resposta da IA");
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro na análise. Tente novamente.");
     } finally {
       setAnalyzing(false);
@@ -171,7 +169,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
         const val = amountMatch[1].replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
         setAmount(val);
         
-        let desc = line.replace(dateMatch[0], '').replace(amountMatch[0], '').trim();
+        const desc = line.replace(dateMatch[0], '').replace(amountMatch[0], '').trim();
         setDescription(desc);
         
         toast.success('Dados identificados!');
@@ -179,7 +177,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
         return;
       }
     }
-    toast.error('Não consegui identificar os dados via busca simples. Experimente o botão Super Analisar!');
+    toast.error('Não consegui identificar os dados via busca simples.');
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -214,8 +212,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
           recurrence_type: isRecurring ? recurrenceType : null,
           installment_total: numInstallments > 1 ? numInstallments : null,
           installment_number: numInstallments > 1 ? i + 1 : null,
-          // New fields logic (we can store them in tags or metadata if needed)
-          // For now, we simulate the "Fixos" by setting is_recurring
         });
       }
 
@@ -225,8 +221,9 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
       toast.success(numInstallments > 1 ? `${numInstallments} parcelas geradas!` : 'Transação registrada!');
       onSuccess?.();
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar transação');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar transação';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -324,7 +321,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
                 </div>
               </div>
 
-              {/* Advanced Planning Sections */}
               <div className="space-y-4 pt-4 border-t border-[var(--border)]">
                  <div className="flex items-center justify-between p-4 rounded-2xl bg-[var(--bg-secondary)]">
                     <div className="flex items-center gap-3">
