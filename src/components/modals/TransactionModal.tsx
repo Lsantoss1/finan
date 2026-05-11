@@ -49,6 +49,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cards, setCards] = useState<any[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -267,7 +269,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
               />
               <div className="flex gap-3">
                 <button type="button" onClick={parseImportText} className="flex-1 py-4 rounded-2xl font-bold text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-all">Busca Simples</button>
-                <button type="button" onClick={handleSuperParse} disabled={loading} className="flex-1 py-4 rounded-2xl font-black text-white gradient-primary shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={handleAIScan} disabled={analyzing} className="flex-1 py-4 rounded-2xl font-black text-white gradient-primary shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                   Super Analisar (IA)
                 </button>
