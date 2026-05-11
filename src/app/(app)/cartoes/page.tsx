@@ -18,6 +18,7 @@ import type { CreditCard, Transaction } from '@/types';
 import CreditCardVisual from '@/components/CreditCardVisual';
 import CardModal from '@/components/modals/CardModal';
 import InvoiceModal from '@/components/modals/InvoiceModal';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import toast from 'react-hot-toast';
 
 export default function CartoesPage() {
@@ -28,6 +29,7 @@ export default function CartoesPage() {
   const [cardTransactions, setCardTransactions] = useState<Transaction[]>([]);
   const [showCardModal, setShowCardModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
 
   const loadData = useCallback(async () => {
@@ -69,6 +71,34 @@ export default function CartoesPage() {
 
   const handlePayInvoice = () => {
     setShowInvoiceModal(true);
+  };
+
+  const handleDeleteCard = async () => {
+    if (!selectedCard) return;
+
+    try {
+      // 1. Deletar transações vinculadas
+      const { error: transError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('card_id', selectedCard.id);
+
+      if (transError) throw transError;
+
+      // 2. Desativar o cartão
+      const { error: cardError } = await supabase
+        .from('credit_cards')
+        .update({ is_active: false })
+        .eq('id', selectedCard.id);
+
+      if (cardError) throw cardError;
+      
+      toast.success('Cartão e movimentações excluídos!');
+      setSelectedCard(null);
+      loadData();
+    } catch (e: any) {
+      toast.error('Erro ao excluir: ' + e.message);
+    }
   };
 
   return (
@@ -113,6 +143,7 @@ export default function CartoesPage() {
                     limit={Number(card.credit_limit)} 
                     used={0}
                     color={card.color}
+                    bank={card.bank as any}
                   />
                 </div>
               ))
@@ -134,7 +165,15 @@ export default function CartoesPage() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => { setEditingCard(selectedCard); setShowCardModal(true); }} className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all" style={{ color: 'var(--text)' }}><Pencil size={18} /></button>
-                  <button className="p-3 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"><Trash2 size={18} /></button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="p-3 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
 
@@ -210,6 +249,16 @@ export default function CartoesPage() {
           card={selectedCard}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteCard}
+        title="Excluir Cartão?"
+        message="ATENÇÃO: Isso excluirá o cartão e TODAS as despesas vinculadas a ele. Esta ação não pode ser desfeita. Deseja continuar?"
+        confirmText="Sim, excluir tudo"
+        cancelText="Não, cancelar"
+      />
     </div>
   );
 }

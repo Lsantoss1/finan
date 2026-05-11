@@ -10,7 +10,7 @@ export async function askGemini(prompt: string) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     return { text: response.text() };
@@ -49,4 +49,32 @@ export async function parseBankStatement(text: string) {
   `;
   
   return askGemini(prompt);
+}
+
+export async function parseWhatsAppMessage(text: string) {
+  const prompt = `
+    Você é um assistente financeiro inteligente. Analise a seguinte mensagem de WhatsApp e extraia os dados de uma transação financeira.
+    Identifique:
+    - Descrição (curta e limpa)
+    - Valor (apenas o número)
+    - Tipo (expense para gastos/saídas ou income para ganhos/entradas)
+    - Categoria Sugerida (um dos seguintes: Alimentação, Transporte, Lazer, Saúde, Moradia, Educação, Pessoal, Investimento, Outros)
+
+    Mensagem: "${text}"
+
+    Retorne APENAS um objeto JSON válido no formato:
+    {"description": "string", "amount": number, "type": "expense" | "income", "category": "string"}
+    Se não conseguir identificar os dados, retorne {"error": "Não entendi os dados da transação"}.
+  `;
+
+  const result = await askGemini(prompt);
+  if (result.error) return result;
+
+  try {
+    // Limpa a resposta do Gemini (remove markdown se houver)
+    const cleanJson = result.text!.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(cleanJson);
+  } catch (e) {
+    return { error: "Erro ao processar a resposta da IA" };
+  }
 }

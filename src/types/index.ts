@@ -15,6 +15,7 @@ export interface Profile {
   currency: string;
   theme: ThemeMode;
   onboarding_completed: boolean;
+  whatsapp_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -81,6 +82,7 @@ export interface CreditCard {
   user_id: string;
   name: string;
   brand: CardBrand | null;
+  bank?: string | null;
   credit_limit: number;
   closing_day: number;
   due_day: number;
