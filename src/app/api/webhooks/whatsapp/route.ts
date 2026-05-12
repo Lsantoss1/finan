@@ -5,11 +5,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // Log para depuração (opcional)
-    // console.log("WhatsApp Webhook Received:", JSON.stringify(body, null, 2));
+    console.log("📩 WhatsApp Webhook Received:", JSON.stringify(body, null, 2));
 
     // A Evolution API envia eventos. O que nos interessa é o 'messages.upsert'
     if (body.event !== "messages.upsert") {
+      console.log(`ℹ️ Ignoring event type: ${body.event}`);
       return NextResponse.json({ ignored: true });
     }
 
@@ -18,7 +18,10 @@ export async function POST(req: Request) {
     const text = messageData.message?.conversation || 
                  messageData.message?.extendedTextMessage?.text;
 
+    console.log(`📝 Message from ${from}: "${text}"`);
+
     if (!text) {
+      console.log("⚠️ No text content found in message data");
       return NextResponse.json({ error: "No text content" }, { status: 400 });
     }
 

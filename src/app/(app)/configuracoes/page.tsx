@@ -30,7 +30,8 @@ export default function ConfiguracoesPage() {
   const [formData, setFormData] = useState({
     name: '',
     currency: 'BRL',
-    theme: 'system'
+    theme: 'system',
+    whatsapp_number: ''
   });
 
   useEffect(() => {
@@ -38,7 +39,8 @@ export default function ConfiguracoesPage() {
       setFormData({
         name: profile.name || '',
         currency: profile.currency || 'BRL',
-        theme: profile.theme || 'system'
+        theme: profile.theme || 'system',
+        whatsapp_number: profile.whatsapp_number || ''
       });
     }
   }, [profile]);
@@ -53,6 +55,7 @@ export default function ConfiguracoesPage() {
         name: formData.name,
         currency: formData.currency,
         theme: formData.theme,
+        whatsapp_number: formData.whatsapp_number,
         updated_at: new Date().toISOString()
       })
       .eq('id', user?.id);
@@ -151,13 +154,15 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>E-mail</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Número do WhatsApp (Assistente)</label>
                   <input 
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-5 py-4 rounded-2xl text-sm border opacity-50 cursor-not-allowed"
+                    value={formData.whatsapp_number}
+                    onChange={e => setFormData({...formData, whatsapp_number: e.target.value})}
+                    className="w-full px-5 py-4 rounded-2xl text-sm border outline-none transition-all focus:border-[var(--primary)]"
                     style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                    placeholder="Ex: 5511999999999"
                   />
+                  <p className="mt-1.5 text-[10px] opacity-50">Digite apenas números com DDI (Ex: 55 para Brasil)</p>
                 </div>
               </div>
 
