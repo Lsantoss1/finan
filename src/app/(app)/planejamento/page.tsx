@@ -246,7 +246,7 @@ export default function PlanejamentoPage() {
           }
         }}
         title="Excluir Planejamento"
-        message="Tem certeza que deseja excluir este registro do seu planejamento? Esta ação não pode ser desfeita e afetará as projeções."
+        description="Tem certeza que deseja excluir este registro do seu planejamento? Esta ação não pode ser desfeita e afetará as projeções."
       />
     </div>
   );
