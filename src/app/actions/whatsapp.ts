@@ -6,14 +6,15 @@ import { parseWhatsAppMessage } from "./ai";
 export async function processWhatsAppMessage(from: string, text: string) {
   const supabaseAdmin = getSupabaseAdmin();
   // 1. Identificar o usuário pelo número de WhatsApp
-  // Remove caracteres não numéricos para garantir comparação limpa
+  // Extrai apenas os últimos 8 dígitos para evitar problemas de DDI, DDD e o nono dígito (muito comum no Brasil)
   const cleanNumber = from.replace(/\D/g, "");
-  console.log(`🔍 Identifying user for number: ${cleanNumber} (from: ${from})`);
+  const searchNumber = cleanNumber.length >= 8 ? cleanNumber.slice(-8) : cleanNumber;
+  console.log(`🔍 Identifying user for number ending in: ${searchNumber} (from: ${from})`);
   
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('id, name')
-    .filter('whatsapp_number', 'ilike', `%${cleanNumber}%`)
+    .filter('whatsapp_number', 'ilike', `%${searchNumber}%`)
     .single();
 
   if (profileError || !profile) {

@@ -20,6 +20,15 @@ import { useUser } from '@/hooks/useUser';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
+const formatWhatsApp = (v: string) => {
+  if (!v) return '';
+  v = v.replace(/\D/g, '');
+  if (v.length <= 2) return `+${v}`;
+  if (v.length <= 4) return `+${v.slice(0,2)} (${v.slice(2)}`;
+  if (v.length <= 8) return `+${v.slice(0,2)} (${v.slice(2,4)}) ${v.slice(4)}`;
+  return `+${v.slice(0,2)} (${v.slice(2,4)}) ${v.slice(4,9)}-${v.slice(9,13)}`;
+};
+
 export default function ConfiguracoesPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -49,13 +58,15 @@ export default function ConfiguracoesPage() {
     e.preventDefault();
     setLoading(true);
     
+    const cleanWhatsapp = formData.whatsapp_number.replace(/\D/g, '');
+
     const { error } = await supabase
       .from('profiles')
       .update({
         name: formData.name,
         currency: formData.currency,
         theme: formData.theme,
-        whatsapp_number: formData.whatsapp_number,
+        whatsapp_number: cleanWhatsapp,
         updated_at: new Date().toISOString()
       })
       .eq('id', user?.id);
@@ -156,13 +167,13 @@ export default function ConfiguracoesPage() {
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Número do WhatsApp (Assistente)</label>
                   <input 
-                    value={formData.whatsapp_number}
-                    onChange={e => setFormData({...formData, whatsapp_number: e.target.value})}
+                    value={formatWhatsApp(formData.whatsapp_number)}
+                    onChange={e => setFormData({...formData, whatsapp_number: e.target.value.replace(/\D/g, '')})}
                     className="w-full px-5 py-4 rounded-2xl text-sm border outline-none transition-all focus:border-[var(--primary)]"
                     style={{ background: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                    placeholder="Ex: 5511999999999"
+                    placeholder="+55 (11) 99999-9999"
+                    maxLength={19}
                   />
-                  <p className="mt-1.5 text-[10px] opacity-50">Digite apenas números com DDI (Ex: 55 para Brasil)</p>
                 </div>
               </div>
 
