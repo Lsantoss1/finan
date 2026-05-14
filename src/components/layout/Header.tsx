@@ -14,6 +14,11 @@ export default function Header() {
   const themeRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -41,7 +46,7 @@ export default function Header() {
         </button>
         <div className="flex flex-col">
           <h2 className="text-lg font-bold tracking-tight" style={{ color: 'var(--text)' }}>
-            {getGreeting()}{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}! 👋
+            {!isMounted ? '...' : <>{getGreeting()}{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}! 👋</>}
           </h2>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

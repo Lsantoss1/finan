@@ -17,6 +17,11 @@ export default function ContasPage() {
   const [form, setForm] = useState<AccountFormData>(defaultForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => { loadAccounts(); }, []);
 
@@ -82,6 +87,7 @@ export default function ContasPage() {
 
   const totalBalance = accounts.reduce((s, a) => s + Number(a.initial_balance), 0);
 
+  if (!isMounted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
   if (loading) return <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 skeleton rounded-2xl" />)}</div>;
 
   return (

@@ -25,6 +25,11 @@ export default function CategoriasPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -76,6 +81,8 @@ export default function CategoriasPage() {
   };
 
   const filteredCategories = categories.filter(c => filterType === 'all' || c.type === filterType);
+
+  if (!isMounted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">

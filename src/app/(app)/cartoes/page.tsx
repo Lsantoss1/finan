@@ -11,7 +11,8 @@ import {
   ArrowRight,
   TrendingDown,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import type { CreditCard, Transaction } from '@/types';
@@ -31,6 +32,11 @@ export default function CartoesPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -100,6 +106,10 @@ export default function CartoesPage() {
       toast.error('Erro ao excluir: ' + e.message);
     }
   };
+
+  if (!isMounted) {
+    return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">

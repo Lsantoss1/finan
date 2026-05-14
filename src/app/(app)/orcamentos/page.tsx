@@ -19,10 +19,14 @@ export default function OrcamentosPage() {
   
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
     category_id: '',
     amount: ''
   });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -123,6 +127,8 @@ export default function OrcamentosPage() {
   const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
   const totalSpent = budgets.reduce((sum, b) => sum + Number(b.spent), 0);
   const totalPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+
+  if (!isMounted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in">

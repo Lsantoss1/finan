@@ -10,7 +10,8 @@ import {
   Calendar, 
   Filter, 
   Download,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, 
@@ -29,13 +30,13 @@ export default function RelatoriosPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyFlow, setMonthlyFlow] = useState<any[]>([]);
-  const [summary, setSummary] = useState({
-    avgDaily: 0,
-    topCategory: '',
-    topValue: 0,
-    totalIncome: 0,
     totalExpense: 0
   });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -102,6 +103,8 @@ export default function RelatoriosPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  if (!isMounted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">

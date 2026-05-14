@@ -13,7 +13,8 @@ import {
   ArrowDownRight,
   Target,
   AlertCircle,
-  Brain
+  Brain,
+  Loader2
 } from 'lucide-react';
 import IntelligenceWidget from '@/components/IntelligenceWidget';
 import { 
@@ -45,6 +46,11 @@ export default function Dashboard() {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [subscriptionsTotal, setSubscriptionsTotal] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -119,6 +125,10 @@ export default function Dashboard() {
     window.addEventListener('transaction-added', handleRefresh);
     return () => window.removeEventListener('transaction-added', handleRefresh);
   }, [loadData]);
+
+  if (!isMounted) {
+    return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
+  }
 
   if (loading) {
     return (

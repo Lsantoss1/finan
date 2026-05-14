@@ -18,12 +18,14 @@ export default function MetasPage() {
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    name: '',
-    target_amount: '',
-    current_amount: '0',
     deadline: '',
     color: '#FFB800'
   });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     loadGoals();
@@ -103,6 +105,8 @@ export default function MetasPage() {
     const { error } = await supabase.from('goals').delete().eq('id', id);
     if (error) toast.error('Erro ao excluir'); else { toast.success('Excluída'); loadGoals(); }
   };
+
+  if (!isMounted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in">

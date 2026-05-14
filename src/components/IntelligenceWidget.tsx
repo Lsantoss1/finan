@@ -19,11 +19,18 @@ interface IntelligenceWidgetProps {
 export default function IntelligenceWidget({ balance, income, expense, subscriptions, loading }: IntelligenceWidgetProps) {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  if (loading) return <div className="h-64 skeleton rounded-[2.5rem]" />;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  const dailyAvg = expense / new Date().getDate();
-  const daysRemaining = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate();
+  if (loading || !isMounted) return <div className="h-64 skeleton rounded-[2.5rem]" />;
+
+  const today = new Date();
+  const dailyAvg = expense / today.getDate();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const daysRemaining = daysInMonth - today.getDate();
   const projectedExtraExpense = dailyAvg * daysRemaining;
   const projectedBalance = balance - projectedExtraExpense;
 
