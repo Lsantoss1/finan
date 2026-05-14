@@ -18,7 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatCurrency, cn, getMonthRange } from '@/lib/utils';
+import { formatCurrency, cn, getMonthRange, formatDateShort } from '@/lib/utils';
 import type { Transaction } from '@/types';
 import TransactionModal from '@/components/modals/TransactionModal';
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal';
@@ -181,7 +181,7 @@ export default function PlanejamentoPage() {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-sm opacity-50 tabular-nums">
-                      {new Date(t.date).toLocaleDateString('pt-BR')}
+                      {formatDateShort(t.date)}
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-4">

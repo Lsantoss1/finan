@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, cn, formatDateShort } from '@/lib/utils';
 import type { CreditCard, Transaction } from '@/types';
 import CreditCardVisual from '@/components/CreditCardVisual';
 import CardModal from '@/components/modals/CardModal';
@@ -226,7 +226,7 @@ export default function CartoesPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black text-rose-500">-{formatCurrency(Number(t.amount))}</p>
-                          <p className="text-[10px] opacity-30 font-bold tabular-nums">{new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                          <p className="text-[10px] opacity-30 font-bold tabular-nums">{formatDateShort(t.date)}</p>
                         </div>
                       </div>
                     ))

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Target, X, Loader2, Trash2, Calendar, Pencil, TrendingUp, ChevronRight } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatPercentage, cn, formatDateShort } from '@/lib/utils';
 import { COLOR_PALETTE } from '@/lib/constants';
 import type { Goal } from '@/types';
 import toast from 'react-hot-toast';
@@ -157,7 +157,7 @@ export default function MetasPage() {
                     <div>
                       <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>{goal.name}</h3>
                       <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {goal.deadline ? `Até ${new Date(goal.deadline).toLocaleDateString()}` : 'Sem prazo'}
+                        {goal.deadline ? `Até ${formatDateShort(goal.deadline)}` : 'Sem prazo'}
                       </p>
                     </div>
                   </div>
