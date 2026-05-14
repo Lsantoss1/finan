@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/auth';
 
-export async function proxy(request: NextRequest) {
-  const response = await updateSession(request);
+export async function middleware(request: NextRequest) {
   if (request.method !== 'GET' && request.url.includes('/api/webhooks')) {
     return NextResponse.next();
   }
+  const response = await updateSession(request);
   return response;
 }
 

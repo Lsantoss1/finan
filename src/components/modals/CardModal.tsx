@@ -71,7 +71,6 @@ export default function CardModal({ isOpen, onClose, onSuccess, card }: CardModa
         closing_day: parseInt(closingDay),
         due_day: parseInt(dueDay),
         color,
-        bank: detectedBank,
         is_active: true
       };
 

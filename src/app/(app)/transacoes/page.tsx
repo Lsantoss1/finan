@@ -6,6 +6,7 @@ import { formatCurrency, cn, formatDateShort } from '@/lib/utils';
 import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { Search, Filter, ArrowUpRight, ArrowDownRight, ArrowLeftRight, MoreVertical, Trash2, Pencil, Calendar as CalendarIcon } from 'lucide-react';
 import MonthSelector from '@/components/MonthSelector';
+import TransactionModal from '@/components/modals/TransactionModal';
 import type { Transaction, Category, Account } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -18,6 +19,7 @@ export default function TransacoesPage() {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense' | 'transfer'>('all');
   const [cards, setCards] = useState<any[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -240,7 +242,14 @@ export default function TransacoesPage() {
                           {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''} {formatCurrency(Number(t.amount))}
                         </span>
                         
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => setEditingTransaction(t)}
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </button>
                           <button 
                             onClick={() => handleDelete(t.id)}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
@@ -258,6 +267,15 @@ export default function TransacoesPage() {
           ))
         )}
       </div>
+
+      {editingTransaction && (
+        <TransactionModal
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSuccess={loadTransactions}
+          transactionToEdit={editingTransaction}
+        />
+      )}
     </div>
   );
 }

@@ -14,9 +14,10 @@ interface TransactionModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   initialType?: TransactionType;
+  transactionToEdit?: any;
 }
 
-export default function TransactionModal({ isOpen, onClose, onSuccess, initialType = 'expense' }: TransactionModalProps) {
+export default function TransactionModal({ isOpen, onClose, onSuccess, initialType = 'expense', transactionToEdit }: TransactionModalProps) {
   const supabase = createClient();
   const [type, setType] = useState<TransactionType>(initialType);
   const [loading, setLoading] = useState(false);
@@ -75,21 +76,36 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   useEffect(() => {
     if (isOpen) {
       loadFormData();
-      setType(initialType);
-      setAmount('');
-      setDescription('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setTags('');
-      setIsRecurring(false);
-      setIsVariable(false);
-      setIsTemporary(false);
-      setSelectedMonths([]);
-      setInstallmentTotal('1');
-      setPaymentMethod('account');
+      if (transactionToEdit) {
+        setType(transactionToEdit.type || initialType);
+        setAmount(Math.abs(transactionToEdit.amount).toString());
+        setDescription(transactionToEdit.description || '');
+        setDate(transactionToEdit.date || new Date().toISOString().split('T')[0]);
+        setTags(transactionToEdit.tags?.join(', ') || '');
+        setAccountId(transactionToEdit.account_id || '');
+        setCardId(transactionToEdit.card_id || '');
+        setCategoryId(transactionToEdit.category_id || '');
+        setToAccountId(transactionToEdit.transfer_to_account_id || '');
+        setPaymentMethod(transactionToEdit.card_id ? 'card' : 'account');
+        setIsRecurring(transactionToEdit.is_recurring || false);
+        setInstallmentTotal(transactionToEdit.installment_total?.toString() || '1');
+      } else {
+        setType(initialType);
+        setAmount('');
+        setDescription('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setTags('');
+        setIsRecurring(false);
+        setIsVariable(false);
+        setIsTemporary(false);
+        setSelectedMonths([]);
+        setInstallmentTotal('1');
+        setPaymentMethod('account');
+      }
       setActiveTab('form');
       setImportText('');
     }
-  }, [isOpen, initialType, loadFormData]);
+  }, [isOpen, initialType, loadFormData, transactionToEdit]);
 
   const toggleMonth = (month: number) => {
     setSelectedMonths(prev => 
@@ -188,37 +204,53 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
     if (!user) return;
 
     try {
-      const numInstallments = parseInt(installmentTotal);
-      const transactionsToInsert = [];
-
-      for (let i = 0; i < numInstallments; i++) {
-        const currentDate = new Date(date);
-        currentDate.setMonth(currentDate.getMonth() + i);
-
-        transactionsToInsert.push({
-          user_id: user.id,
+      if (transactionToEdit) {
+        const updateData = {
           amount: parseFloat(amount),
-          description: numInstallments > 1 
-            ? `${description || 'Parcela'} (${i + 1}/${numInstallments})` 
-            : (description || null),
-          date: currentDate.toISOString().split('T')[0],
+          description: description || null,
+          date,
           type,
           account_id: paymentMethod === 'account' ? (accountId || null) : null,
           card_id: paymentMethod === 'card' ? cardId : null,
           category_id: type === 'transfer' ? null : categoryId,
           transfer_to_account_id: type === 'transfer' ? toAccountId : null,
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-          is_recurring: isRecurring,
-          recurrence_type: isRecurring ? recurrenceType : null,
-          installment_total: numInstallments > 1 ? numInstallments : null,
-          installment_number: numInstallments > 1 ? i + 1 : null,
-        });
+        };
+        const { error } = await supabase.from('transactions').update(updateData).eq('id', transactionToEdit.id);
+        if (error) throw error;
+        toast.success('Transação atualizada!');
+      } else {
+        const numInstallments = parseInt(installmentTotal);
+        const transactionsToInsert = [];
+
+        for (let i = 0; i < numInstallments; i++) {
+          const currentDate = new Date(date);
+          currentDate.setMonth(currentDate.getMonth() + i);
+
+          transactionsToInsert.push({
+            user_id: user.id,
+            amount: parseFloat(amount),
+            description: numInstallments > 1 
+              ? `${description || 'Parcela'} (${i + 1}/${numInstallments})` 
+              : (description || null),
+            date: currentDate.toISOString().split('T')[0],
+            type,
+            account_id: paymentMethod === 'account' ? (accountId || null) : null,
+            card_id: paymentMethod === 'card' ? cardId : null,
+            category_id: type === 'transfer' ? null : categoryId,
+            transfer_to_account_id: type === 'transfer' ? toAccountId : null,
+            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+            is_recurring: isRecurring,
+            recurrence_type: isRecurring ? recurrenceType : null,
+            installment_total: numInstallments > 1 ? numInstallments : null,
+            installment_number: numInstallments > 1 ? i + 1 : null,
+          });
+        }
+
+        const { error } = await supabase.from('transactions').insert(transactionsToInsert);
+        if (error) throw error;
+        toast.success(numInstallments > 1 ? `${numInstallments} parcelas geradas!` : 'Transação registrada!');
       }
-
-      const { error } = await supabase.from('transactions').insert(transactionsToInsert);
-      if (error) throw error;
-
-      toast.success(numInstallments > 1 ? `${numInstallments} parcelas geradas!` : 'Transação registrada!');
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
