@@ -116,12 +116,12 @@ export default function CartoesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Cards List (Wallet Style) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="flex flex-col gap-6">
+        <div className="lg:col-span-4 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
             {loading ? (
-              Array.from({ length: 2 }).map((_, i) => <div key={i} className="aspect-[1.586/1] skeleton rounded-3xl" />)
+              Array.from({ length: 2 }).map((_, i) => <div key={i} className="aspect-[1.586/1] skeleton rounded-3xl max-w-[360px]" />)
             ) : cards.length === 0 ? (
               <div className="aspect-[1.586/1] rounded-[2.5rem] border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center p-8 text-center">
                 <CardIcon size={48} className="opacity-10 mb-4" />
@@ -133,8 +133,10 @@ export default function CartoesPage() {
                   key={card.id} 
                   onClick={() => setSelectedCard(card)}
                   className={cn(
-                    "transition-all cursor-pointer",
-                    selectedCard?.id === card.id ? "scale-100 opacity-100" : "scale-95 opacity-40 hover:opacity-70"
+                    "transition-all cursor-pointer relative max-w-[360px] mx-auto lg:mx-0",
+                    selectedCard?.id === card.id 
+                      ? "scale-100 opacity-100 ring-2 ring-[var(--primary)] ring-offset-4 ring-offset-[var(--bg)] rounded-[2rem] shadow-2xl" 
+                      : "scale-95 opacity-50 hover:opacity-100"
                   )}
                 >
                   <CreditCardVisual 
@@ -152,7 +154,7 @@ export default function CartoesPage() {
         </div>
 
         {/* Right: Card Details & Invoice */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="lg:col-span-8 space-y-8">
           {selectedCard ? (
             <div className="apple-glass p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl animate-scale-in">
               <div className="flex items-center justify-between mb-10">

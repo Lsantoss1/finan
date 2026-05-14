@@ -14,7 +14,21 @@ interface CreditCardVisualProps {
   color?: string;
   brand?: 'visa' | 'mastercard' | 'elo' | 'generic';
   bank?: BankType;
+  scale?: number;
 }
+
+export const detectBank = (name: string): BankType => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('nubank') || lowerName.includes('nu bank') || lowerName.includes('roxinho')) return 'nubank';
+  if (lowerName.includes('inter')) return 'inter';
+  if (lowerName.includes('itau')) return 'itau';
+  if (lowerName.includes('santander')) return 'santander';
+  if (lowerName.includes('c6')) return 'c6';
+  if (lowerName.includes('bradesco')) return 'bradesco';
+  if (lowerName.includes('brasil') || lowerName.includes(' bance do brasil') || lowerName.includes(' bb')) return 'bb';
+  if (lowerName.includes('neon')) return 'neon';
+  return 'generic';
+};
 
 const bankStyles: Record<BankType, { gradient: string, textColor: string, pattern?: string }> = {
   nubank: {
@@ -64,23 +78,24 @@ export default function CreditCardVisual({
   used, 
   color, 
   brand = 'generic',
-  bank = 'generic'
+  bank = 'generic',
+  scale = 1
 }: CreditCardVisualProps) {
   const available = limit - used;
   const progress = (used / limit) * 100;
   
-  // Se o usuário escolher uma cor manual, ela sobrepõe o gradiente do banco (exceto se for generic)
-  const currentStyle = bankStyles[bank] || bankStyles.generic;
-  const background = color && bank === 'generic' 
+  const detectedBank = bank === 'generic' ? detectBank(name) : bank;
+  const currentStyle = bankStyles[detectedBank] || bankStyles.generic;
+  const background = color && detectedBank === 'generic' 
     ? `linear-gradient(135deg, ${color}, ${color}dd)` 
     : currentStyle.gradient;
 
   return (
     <motion.div 
-      whileHover={{ scale: 1.05, rotateY: 5, rotateX: -5 }}
+      whileHover={{ scale: scale * 1.05, rotateY: 5, rotateX: -5 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="relative w-full aspect-[1.586/1] rounded-3xl p-6 overflow-hidden shadow-2xl cursor-pointer preserve-3d"
-      style={{ background, color: currentStyle.textColor }}
+      className="relative w-full aspect-[1.586/1] rounded-3xl p-6 overflow-hidden shadow-2xl cursor-pointer preserve-3d origin-center"
+      style={{ background, color: currentStyle.textColor, transform: `scale(${scale})` }}
     >
       {/* Texture Layer */}
       {currentStyle.pattern && (
@@ -95,7 +110,7 @@ export default function CreditCardVisual({
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">
-              {bank !== 'generic' ? bank.toUpperCase() : 'FinançasPro'} PLATINUM
+              {detectedBank !== 'generic' ? detectedBank.toUpperCase() : 'FinançasPro'} PLATINUM
             </span>
             <h4 className="text-xl font-black tracking-tight">{name}</h4>
           </div>

@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { COLOR_PALETTE } from '@/lib/constants';
 import toast from 'react-hot-toast';
-import CreditCardVisual, { BankType } from '../CreditCardVisual';
+import CreditCardVisual, { BankType, detectBank } from '../CreditCardVisual';
 
 interface CardModalProps {
   isOpen: boolean;
@@ -27,16 +27,7 @@ export default function CardModal({ isOpen, onClose, onSuccess, card }: CardModa
 
   // Detecção inteligente de banco
   useEffect(() => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('nubank') || lowerName.includes('nu bank') || lowerName.includes('roxinho')) setDetectedBank('nubank');
-    else if (lowerName.includes('inter')) setDetectedBank('inter');
-    else if (lowerName.includes('itau')) setDetectedBank('itau');
-    else if (lowerName.includes('santander')) setDetectedBank('santander');
-    else if (lowerName.includes('c6')) setDetectedBank('c6');
-    else if (lowerName.includes('bradesco')) setDetectedBank('bradesco');
-    else if (lowerName.includes('brasil') || lowerName.includes(' bance do brasil') || lowerName.includes(' bb')) setDetectedBank('bb');
-    else if (lowerName.includes('neon')) setDetectedBank('neon');
-    else setDetectedBank('generic');
+    setDetectedBank(detectBank(name));
   }, [name]);
 
   useEffect(() => {
