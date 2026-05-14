@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, getMonthRange, cn } from '@/lib/utils';
 import { MONTHS_SHORT } from '@/lib/constants';
+import toast from 'react-hot-toast';
 import { 
   Wallet, 
   TrendingUp, 
