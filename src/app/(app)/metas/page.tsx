@@ -18,6 +18,9 @@ export default function MetasPage() {
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
+    name: '',
+    target_amount: '',
+    current_amount: '0',
     deadline: '',
     color: '#FFB800'
   });
