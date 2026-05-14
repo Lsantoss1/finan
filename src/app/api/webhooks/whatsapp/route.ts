@@ -3,38 +3,57 @@ import { processWhatsAppMessage } from "@/app/actions/whatsapp";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const contentType = req.headers.get('content-type') || '';
     
-    console.log("📩 WhatsApp Webhook Received:", JSON.stringify(body, null, 2));
+    let from = '';
+    let text = '';
 
-    // A Evolution API envia eventos. O que nos interessa é o 'messages.upsert'
-    if (body.event !== "messages.upsert") {
-      console.log(`ℹ️ Ignoring event type: ${body.event}`);
-      return NextResponse.json({ ignored: true });
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const textBody = await req.text();
+      const params = new URLSearchParams(textBody);
+      from = params.get('From') || '';
+      text = params.get('Body') || '';
+    } else {
+      const body = await req.json();
+      from = body.From || '';
+      text = body.Body || '';
     }
 
-    const messageData = body.data;
-    const from = messageData.key.remoteJid.split("@")[0]; // Pega apenas o número
-    const text = messageData.message?.conversation || 
-                 messageData.message?.extendedTextMessage?.text;
+    console.log(`📩 Twilio Webhook Received - From: ${from}, Body: "${text}"`);
 
-    console.log(`📝 Message from ${from}: "${text}"`);
-
-    if (!text) {
-      console.log("⚠️ No text content found in message data");
-      return NextResponse.json({ error: "No text content" }, { status: 400 });
+    if (!text || !from) {
+      console.log("⚠️ No text or sender found in message data");
+      return new NextResponse("No text content", { status: 400 });
     }
 
     // Processa a mensagem
     const result = await processWhatsAppMessage(from, text);
 
-    // Retorna a resposta para que o integrador possa (opcionalmente) enviar de volta ao usuário
-    // Nota: A Evolution API não envia a resposta automaticamente por aqui, 
-    // teríamos que chamar a API deles para responder.
-    return NextResponse.json(result);
+    // O Twilio lê respostas em XML (TwiML) para saber o que responder no WhatsApp
+    let twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>\n<Response></Response>`;
+    
+    if (result && result.message) {
+      // Se processou com sucesso ou erro, envia a mensagem de volta pro WhatsApp da pessoa
+      twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>${result.message}</Message>
+</Response>`;
+    } else if (result && result.error) {
+      twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>❌ ${result.error}</Message>
+</Response>`;
+    }
+
+    return new NextResponse(twimlResponse, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/xml',
+      },
+    });
 
   } catch (error) {
     console.error("Webhook Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
