@@ -30,6 +30,11 @@ export default function RelatoriosPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyFlow, setMonthlyFlow] = useState<any[]>([]);
+  const [summary, setSummary] = useState({
+    avgDaily: 0,
+    topCategory: '',
+    topValue: 0,
+    totalIncome: 0,
     totalExpense: 0
   });
   const [isMounted, setIsMounted] = useState(false);

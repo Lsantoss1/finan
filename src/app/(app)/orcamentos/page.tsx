@@ -19,6 +19,7 @@ export default function OrcamentosPage() {
   
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({
     category_id: '',
     amount: ''
   });
