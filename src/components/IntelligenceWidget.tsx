@@ -6,7 +6,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { AIService } from '@/lib/ai';
 import { analyzeFinancialState } from '@/app/actions/ai';
 import toast from 'react-hot-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface IntelligenceWidgetProps {
   balance: number;
