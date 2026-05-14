@@ -81,13 +81,15 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
         setAmount(Math.abs(transactionToEdit.amount).toString());
         setDescription(transactionToEdit.description || '');
         setDate(transactionToEdit.date || new Date().toISOString().split('T')[0]);
-        setTags(transactionToEdit.tags?.join(', ') || '');
+        const visibleTags = (transactionToEdit.tags || []).filter((t: string) => t !== '_is_variable');
+        setTags(visibleTags.join(', '));
         setAccountId(transactionToEdit.account_id || '');
         setCardId(transactionToEdit.card_id || '');
         setCategoryId(transactionToEdit.category_id || '');
         setToAccountId(transactionToEdit.transfer_to_account_id || '');
         setPaymentMethod(transactionToEdit.card_id ? 'card' : 'account');
         setIsRecurring(transactionToEdit.is_recurring || false);
+        setIsVariable(transactionToEdit.tags?.includes('_is_variable') || false);
         setInstallmentTotal(transactionToEdit.installment_total?.toString() || '1');
       } else {
         setType(initialType);
@@ -215,7 +217,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
           card_id: paymentMethod === 'card' ? cardId : null,
           category_id: type === 'transfer' ? null : categoryId,
           transfer_to_account_id: type === 'transfer' ? toAccountId : null,
-          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          tags: [...tags.split(',').map(t => t.trim()).filter(Boolean).filter(t => t !== '_is_variable'), ...(isVariable ? ['_is_variable'] : [])],
         };
         const { error } = await supabase.from('transactions').update(updateData).eq('id', transactionToEdit.id);
         if (error) throw error;
@@ -240,7 +242,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
             card_id: paymentMethod === 'card' ? cardId : null,
             category_id: type === 'transfer' ? null : categoryId,
             transfer_to_account_id: type === 'transfer' ? toAccountId : null,
-            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+            tags: [...tags.split(',').map(t => t.trim()).filter(Boolean).filter(t => t !== '_is_variable'), ...(isVariable ? ['_is_variable'] : [])],
             is_recurring: isRecurring,
             recurrence_type: isRecurring ? recurrenceType : null,
             installment_total: numInstallments > 1 ? numInstallments : null,

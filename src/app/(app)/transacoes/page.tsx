@@ -8,6 +8,7 @@ import { Search, Filter, ArrowUpRight, ArrowDownRight, ArrowLeftRight, MoreVerti
 import MonthSelector from '@/components/MonthSelector';
 import TransactionModal from '@/components/modals/TransactionModal';
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal';
+import VariableConfirmModal from '@/components/modals/VariableConfirmModal';
 import type { Transaction, Category, Account } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -22,6 +23,7 @@ export default function TransacoesPage() {
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
+  const [variableConfirmTransaction, setVariableConfirmTransaction] = useState<Transaction | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -264,7 +266,11 @@ export default function TransacoesPage() {
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingTransaction(t);
+                              if (t.is_recurring && t.tags?.includes('_is_variable')) {
+                                setVariableConfirmTransaction(t);
+                              } else {
+                                setEditingTransaction(t);
+                              }
                             }}
                             className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors"
                             title="Editar"
@@ -308,6 +314,55 @@ export default function TransacoesPage() {
         loading={deleteLoading}
         title="Excluir Transação"
         description="Deseja realmente excluir esta transação? Este valor será estornado do seu saldo."
+      />
+
+      <VariableConfirmModal
+        isOpen={!!variableConfirmTransaction}
+        transaction={variableConfirmTransaction}
+        onClose={() => setVariableConfirmTransaction(null)}
+        onEditBaseValue={() => {
+          setEditingTransaction(variableConfirmTransaction);
+          setVariableConfirmTransaction(null);
+        }}
+        onConfirmCurrentMonth={async (actualAmount) => {
+          if (!variableConfirmTransaction) return;
+          const t = variableConfirmTransaction;
+          
+          try {
+            // 1. Inserir cópia para este mês
+            const { error: insertError } = await supabase.from('transactions').insert({
+              user_id: t.user_id,
+              amount: actualAmount,
+              description: t.description,
+              date: t.date,
+              type: t.type,
+              account_id: t.account_id,
+              card_id: t.card_id,
+              category_id: t.category_id,
+              transfer_to_account_id: t.transfer_to_account_id,
+              tags: (t.tags || []).filter(tag => tag !== '_is_variable'),
+              is_recurring: false // A cópia não é recorrente
+            });
+            
+            if (insertError) throw insertError;
+            
+            // 2. Empurrar a data da original para o próximo mês
+            const nextMonthDate = new Date(t.date);
+            nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+            
+            const { error: updateError } = await supabase.from('transactions')
+              .update({ date: nextMonthDate.toISOString().split('T')[0] })
+              .eq('id', t.id);
+              
+            if (updateError) throw updateError;
+            
+            toast.success('Mês confirmado com sucesso!');
+            setVariableConfirmTransaction(null);
+            loadTransactions();
+          } catch (error: any) {
+            toast.error('Erro ao confirmar: ' + error.message);
+          }
+        }}
       />
     </div>
   );
