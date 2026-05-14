@@ -13,11 +13,15 @@ import {
   Zap, 
   ShoppingBag,
   Wallet,
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  Trash2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { formatCurrency, cn, getMonthRange } from '@/lib/utils';
 import type { Transaction } from '@/types';
 import TransactionModal from '@/components/modals/TransactionModal';
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal';
 
 export default function PlanejamentoPage() {
   const supabase = createClient();
@@ -25,6 +29,8 @@ export default function PlanejamentoPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'fixos' | 'variaveis'>('fixos');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -70,7 +76,7 @@ export default function PlanejamentoPage() {
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Organize seu fluxo de caixa entre fixo e variável</p>
         </div>
         <button 
-          onClick={() => setShowModal(true)}
+          onClick={() => { setEditingTransaction(null); setShowModal(true); }}
           className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-white gradient-primary shadow-xl hover:scale-105 active:scale-95 transition-all"
         >
           <Plus size={20} /> Novo Planejamento
@@ -178,12 +184,38 @@ export default function PlanejamentoPage() {
                       {new Date(t.date).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <span className={cn(
-                        "font-black text-sm tabular-nums",
-                        t.type === 'income' ? "text-emerald-500" : "text-rose-500"
-                      )}>
-                        {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
-                      </span>
+                      <div className="flex items-center justify-end gap-4">
+                        <span className={cn(
+                          "font-black text-sm tabular-nums",
+                          t.type === 'income' ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                          {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
+                        </span>
+                        
+                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTransaction(t);
+                              setShowModal(true);
+                            }}
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingTransactionId(t.id);
+                            }}
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -197,6 +229,24 @@ export default function PlanejamentoPage() {
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
         onSuccess={() => { loadData(); setShowModal(false); }} 
+        transactionToEdit={editingTransaction}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!deletingTransactionId}
+        onClose={() => setDeletingTransactionId(null)}
+        onConfirm={async () => {
+          if (!deletingTransactionId) return;
+          const { error } = await supabase.from('transactions').delete().eq('id', deletingTransactionId);
+          if (error) {
+            toast.error(error.message);
+          } else {
+            toast.success('Transação excluída com sucesso!');
+            loadData();
+          }
+        }}
+        title="Excluir Planejamento"
+        message="Tem certeza que deseja excluir este registro do seu planejamento? Esta ação não pode ser desfeita e afetará as projeções."
       />
     </div>
   );
