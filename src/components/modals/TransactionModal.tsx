@@ -27,7 +27,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
   // Form state
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(''); // Inicializa vazio para evitar erro de hidratação #418
   const [accountId, setAccountId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [cardId, setCardId] = useState('');
@@ -93,6 +93,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialTy
         setType(initialType);
         setAmount('');
         setDescription('');
+        // Usar uma data fixa ou vazia para o servidor e definir a real no cliente
         setDate(new Date().toISOString().split('T')[0]);
         setTags('');
         setIsRecurring(false);

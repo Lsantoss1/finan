@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, cn, formatDateShort } from '@/lib/utils';
 import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
-import { Search, Filter, ArrowUpRight, ArrowDownRight, ArrowLeftRight, MoreVertical, Trash2, Pencil, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, Filter, ArrowUpRight, ArrowDownRight, ArrowLeftRight, MoreVertical, Trash2, Pencil, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import MonthSelector from '@/components/MonthSelector';
 import TransactionModal from '@/components/modals/TransactionModal';
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal';
 import type { Transaction, Category, Account } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -20,6 +21,13 @@ export default function TransacoesPage() {
   const [cards, setCards] = useState<any[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -79,16 +87,19 @@ export default function TransacoesPage() {
     return () => window.removeEventListener('transaction-added', handleRefresh);
   }, [loadTransactions]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta transação?')) return;
+  const handleDelete = async () => {
+    if (!deletingTransactionId) return;
     
-    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    setDeleteLoading(true);
+    const { error } = await supabase.from('transactions').delete().eq('id', deletingTransactionId);
     if (error) {
       toast.error('Erro ao excluir');
     } else {
       toast.success('Excluída com sucesso');
+      setDeletingTransactionId(null);
       loadTransactions();
     }
+    setDeleteLoading(false);
   };
 
   // Group transactions by date
@@ -105,6 +116,10 @@ export default function TransacoesPage() {
     else if (t.type === 'expense') acc.expense += amount;
     return acc;
   }, { income: 0, expense: 0 });
+
+  if (!isMounted) {
+    return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin opacity-20" /></div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -244,14 +259,20 @@ export default function TransacoesPage() {
                         
                         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button 
-                            onClick={() => setEditingTransaction(t)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTransaction(t);
+                            }}
                             className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors"
                             title="Editar"
                           >
                             <Pencil size={16} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(t.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingTransactionId(t.id);
+                            }}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
                             title="Excluir"
                           >
@@ -276,6 +297,15 @@ export default function TransacoesPage() {
           transactionToEdit={editingTransaction}
         />
       )}
+
+      <DeleteConfirmModal 
+        isOpen={!!deletingTransactionId}
+        onClose={() => setDeletingTransactionId(null)}
+        onConfirm={handleDelete}
+        loading={deleteLoading}
+        title="Excluir Transação"
+        description="Deseja realmente excluir esta transação? Este valor será estornado do seu saldo."
+      />
     </div>
   );
 }
