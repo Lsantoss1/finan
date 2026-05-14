@@ -54,72 +54,79 @@ export default function Dashboard() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    const { start, end } = getMonthRange();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const { start, end } = getMonthRange();
 
-    const [statsRes, txnsRes, accountsRes, goalsRes, budgetsRes] = await Promise.all([
-      supabase.rpc('get_dashboard_stats', { p_user_id: user.id, p_start_date: start, p_end_date: end }),
-      supabase.from('transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
-      supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true),
-      supabase.from('goals').select('*').eq('user_id', user.id).limit(3),
-      supabase.from('budgets').select('*').eq('user_id', user.id).eq('month', new Date().getMonth() + 1).eq('year', new Date().getFullYear())
-    ]);
+      const [statsRes, txnsRes, accountsRes, goalsRes, budgetsRes] = await Promise.all([
+        supabase.rpc('get_dashboard_stats', { p_user_id: user.id, p_start_date: start, p_end_date: end }),
+        supabase.from('transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
+        supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('goals').select('*').eq('user_id', user.id).limit(3),
+        supabase.from('budgets').select('*').eq('user_id', user.id).eq('month', new Date().getMonth() + 1).eq('year', new Date().getFullYear())
+      ]);
 
-    const dashboardStats = statsRes.data?.[0] || { total_income: 0, total_expense: 0, balance: 0 };
-    setStats(dashboardStats);
-    setTransactions(txnsRes.data || []);
-    setAccounts(accountsRes.data || []);
-    setGoals(goalsRes.data || []);
-    
-    // Calculate projection data
-    const currentBalance = dashboardStats.balance;
-    const projection = [];
-    let runningBalance = currentBalance;
+      if (statsRes.error) console.error('Stats Error:', statsRes.error);
 
-    // Get all transactions for the current month to build the daily chart
-    const { data: monthTxns } = await supabase.from('transactions')
-      .select('amount, type, date, category_id')
-      .eq('user_id', user.id)
-      .gte('date', start)
-      .lte('date', end)
-      .order('date', { ascending: true });
-
-    // Build day-by-day balance
-    const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dayTotal = (monthTxns || [])
-        .filter(t => t.date === dateStr)
-        .reduce((acc, t) => acc + (t.type === 'income' ? Number(t.amount) : -Number(t.amount)), 0);
+      const dashboardStats = statsRes.data?.[0] || { total_income: 0, total_expense: 0, balance: 0 };
+      setStats(dashboardStats);
+      setTransactions(txnsRes.data || []);
+      setAccounts(accountsRes.data || []);
+      setGoals(goalsRes.data || []);
       
-      runningBalance += dayTotal;
-      projection.push({
-        name: `${day}`,
-        value: runningBalance,
-        date: dateStr
-      });
-    }
-    setChartData(projection);
+      // Calculate projection data
+      const currentBalance = dashboardStats.balance;
+      const projection = [];
+      let runningBalance = currentBalance;
 
-    // Calculate subscriptions (is_recurring = true)
-    const { data: recurringData } = await supabase.from('transactions').select('amount').eq('user_id', user.id).eq('is_recurring', true).eq('type', 'expense');
-    setSubscriptionsTotal(recurringData?.reduce((s, t) => s + Number(t.amount), 0) || 0);
+      // Get all transactions for the current month to build the daily chart
+      const { data: monthTxns } = await supabase.from('transactions')
+        .select('amount, type, date, category_id')
+        .eq('user_id', user.id)
+        .gte('date', start)
+        .lte('date', end)
+        .order('date', { ascending: true });
 
-    if (budgetsRes.data) {
-      const budgetsWithSpent = budgetsRes.data.map(b => ({
-        ...b,
-        spent: (monthTxns || []).filter(t => t.category_id === b.category_id).reduce((s, t) => s + Number(t.amount), 0)
-      }));
-      setBudgets(budgetsWithSpent);
+      // Build day-by-day balance
+      const today = new Date();
+      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayTotal = (monthTxns || [])
+          .filter(t => t.date === dateStr)
+          .reduce((acc, t) => acc + (t.type === 'income' ? Number(t.amount) : -Number(t.amount)), 0);
+        
+        runningBalance += dayTotal;
+        projection.push({
+          name: `${day}`,
+          value: runningBalance,
+          date: dateStr
+        });
+      }
+      setChartData(projection);
+
+      // Calculate subscriptions (is_recurring = true)
+      const { data: recurringData } = await supabase.from('transactions').select('amount').eq('user_id', user.id).eq('is_recurring', true).eq('type', 'expense');
+      setSubscriptionsTotal(recurringData?.reduce((s, t) => s + Number(t.amount), 0) || 0);
+
+      if (budgetsRes.data) {
+        const budgetsWithSpent = budgetsRes.data.map(b => ({
+          ...b,
+          spent: (monthTxns || []).filter(t => t.category_id === b.category_id).reduce((s, t) => s + Number(t.amount), 0)
+        }));
+        setBudgets(budgetsWithSpent);
+      }
+    } catch (error) {
+      console.error('Dashboard Load Error:', error);
+      toast.error("Erro ao carregar dados do painel");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, [supabase, isMounted]);
 
   useEffect(() => {
