@@ -27,7 +27,10 @@ export default function ContasPage() {
 
   const loadAccounts = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const { data } = await supabase.from('accounts').select('*').eq('user_id', user.id).order('created_at');
     setAccounts(data || []);
     setLoading(false);

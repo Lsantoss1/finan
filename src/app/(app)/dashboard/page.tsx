@@ -55,7 +55,10 @@ export default function Dashboard() {
   const loadData = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const { start, end } = getMonthRange();
 
     const [statsRes, txnsRes, accountsRes, goalsRes, budgetsRes] = await Promise.all([
@@ -117,7 +120,7 @@ export default function Dashboard() {
     }
     
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, isMounted]);
 
   useEffect(() => {
     loadData();

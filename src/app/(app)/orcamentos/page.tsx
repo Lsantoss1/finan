@@ -32,7 +32,10 @@ export default function OrcamentosPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const month = currentDate.getMonth() + 1;
     const year = currentDate.getFullYear();

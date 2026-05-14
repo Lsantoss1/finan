@@ -46,7 +46,10 @@ export default function CategoriasPage() {
   const loadCategories = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const { data } = await supabase.from('categories').select('*').eq('user_id', user.id).order('name');
     setCategories(data || []);
